@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RicoRico 🍩</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-pink-50">
+
+<script>
+const ADMIN_PASSWORD = "RicoRico220125";
+const whatsappBase = "https://wa.me/5492617025691?text=";
+
+let isAdmin = false;
+let cart = [];
+
+// 🔥 productos (persistentes)
+let products = JSON.parse(localStorage.getItem("products")) || {
+  donas: [
+    { name: "Donitas Simples", price: 4000 },
+    { name: "Donitas Chocolate", price: 4400 },
+    { name: "Donitas Oreo", price: 5000 },
+    { name: "Donitas Coco", price: 4500 },
+    { name: "Donitas Rocklets", price: 4800 },
+    { name: "Donitas Crocantes", price: 4700 },
+    { name: "Donitas Glaseadas", price: 4400 },
+    { name: "Donitas Saborizadas", price: 4500 }
+  ],
+  alfajores: [
+    { name: "Alfajores Maicena", price: 5000 },
+    { name: "Alfajores Chocolate", price: 8500 },
+    { name: "Alfajores Chips", price: 7000 }
+  ],
+  galletas: [
+    { name: "Galletas Chips Chocolate", price: 3000 },
+    { name: "Galletas Bañadas Chocolate", price: 4000 },
+    { name: "Galletas Saborizadas", price: 2700 },
+    { name: "Galletas Marmoladas", price: 3200 }
+  ],
+  bizcochuelos: [
+    { name: "Bizcochuelo Marmolado", price: 9500 },
+    { name: "Bizcochuelo Mandarina", price: 9500 },
+    { name: "Bizcochuelo Limón", price: 9500 },
+    { name: "Bizcochuelo Chocolate", price: 9500 }
+  ],
+  budines: [
+    { name: "Budín Marmolado", price: 9500 },
+    { name: "Budín Mandarina", price: 9500 },
+    { name: "Budín Limón", price: 9500 },
+    { name: "Budín Chocolate", price: 9500 }
+  ],
+  magdalenas: [
+    { name: "Magdalena Chips Chocolate", price: 5000 },
+    { name: "Magdalena Chocolate", price: 5000 },
+    { name: "Magdalena Vainilla", price: 5000 }
+  ]
+};
+
+function save() {
+  localStorage.setItem("products", JSON.stringify(products));
+}
+
+/* ================= ADMIN ================= */
+
+function login() {
+  const pass = prompt("Contraseña admin:");
+  if (pass === ADMIN_PASSWORD) {
+    isAdmin = true;
+    render();
+  } else {
+    alert("Incorrecto");
+  }
+}
+
+function addProduct(cat) {
+  const name = prompt("Nombre producto:");
+  const price = prompt("Precio:");
+  if (!name || !price) return;
+
+  products[cat].push({ name, price: Number(price) });
+  save();
+  render();
+}
+
+function deleteProduct(cat, i) {
+  products[cat].splice(i, 1);
+  save();
+  render();
+}
+
+function editPrice(cat, i) {
+  const price = prompt("Nuevo precio:");
+  if (!price) return;
+
+  products[cat][i].price = Number(price);
+  save();
+  render();
+}
+
+/* ================= CART ================= */
+
+function addToCart(item) {
+  cart.push(item);
+  render();
+}
+
+function total() {
+  return cart.reduce((a,b) => a + b.price, 0);
+}
+
+function sendOrder() {
+  if (cart.length === 0) return alert("Carrito vacío");
+
+  const text =
+    "🍩 Pedido RicoRico:%0A" +
+    cart.map(i => "- " + i.name).join("%0A") +
+    "%0A%0ATotal: $" + total();
+
+  window.open(whatsappBase + text, "_blank");
+}
+
+/* ================= UI ================= */
+
+function render() {
+  let html = "";
+
+  // HEADER
+  html += `
+    <div class="bg-pink-500 text-white text-center p-6">
+      <h1 class="text-4xl font-bold">🍩 RICORICO</h1>
+
+      <button onclick="sendOrder()"
+        class="bg-white text-pink-600 px-4 py-2 mt-3 rounded-full font-bold">
+        🛒 Pedido ($${total()})
+      </button>
+    </div>
+  `;
+
+  // LOGIN BUTTON
+  if (!isAdmin) {
+    html += `
+      <button onclick="login()"
+        class="fixed top-4 right-4 bg-yellow-400 px-3 py-1 rounded shadow">
+        Admin
+      </button>
+    `;
+  }
+
+  // PANEL ADMIN
+  if (isAdmin) {
+    html += `
+      <div class="fixed right-4 top-4 w-72 bg-white shadow-xl p-4 rounded-xl border">
+        <h2 class="font-bold text-pink-600 mb-3">⚙️ PANEL ADMIN</h2>
+
+        ${Object.keys(products).map(cat => `
+          <button onclick="addProduct('${cat}')"
+            class="bg-pink-500 text-white w-full mb-2 py-1 rounded capitalize">
+            + ${cat}
+          </button>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  // PRODUCTS
+  for (let cat in products) {
+    html += `
+      <div class="p-4">
+        <h2 class="text-xl font-bold text-pink-600 capitalize mb-3">${cat}</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    `;
+
+    products[cat].forEach((p, i) => {
+      html += `
+        <div class="bg-white p-3 rounded shadow">
+
+          <p class="font-bold">${p.name}</p>
+          <p class="text-pink-600 font-semibold">$${p.price}</p>
+
+          <button onclick='addToCart(${JSON.stringify(p)})'
+            class="bg-pink-500 text-white w-full mt-2 rounded">
+            Agregar
+          </button>
+
+          <a href="${whatsappBase}${encodeURIComponent("Hola quiero: " + p.name)}"
+             target="_blank"
+             class="block text-center bg-green-500 text-white mt-2 py-1 rounded">
+            WhatsApp
+          </a>
+
+          ${isAdmin ? `
+            <button onclick="editPrice('${cat}',${i})"
+              class="bg-yellow-400 w-full mt-2">
+              Editar
+            </button>
+
+            <button onclick="deleteProduct('${cat}',${i})"
+              class="bg-red-500 text-white w-full mt-1">
+              Eliminar
+            </button>
+          ` : ""}
+
+        </div>
+      `;
+    });
+
+    html += `</div></div>`;
+  }
+
+  // FLOAT WHATSAPP
+  html += `
+    <a href="${whatsappBase}${encodeURIComponent("Hola quiero hacer un pedido")}"
+       target="_blank"
+       class="fixed bottom-6 right-6 bg-green-500 p-4 rounded-full text-white text-xl shadow-lg">
+      💬
+    </a>
+  `;
+
+  document.body.innerHTML = html;
+}
+
+render();
+</script>
+
+</body>
+</html>
